@@ -28,5 +28,8 @@ jobs:
       - name: Check HTML/JS formatting (Prettier)
         run: npx prettier --check index.html
 
+      - name: Test
+        run: npm test
+
       - name: Build
         run: npm run build
