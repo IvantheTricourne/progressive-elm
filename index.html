@@ -144,15 +144,19 @@
         app.ports.storageRoutinesSaved.send(null);
       });
 
+      // Serialise draft ops so a pending saveDraft never overwrites a deleteDraft
+      let draftQueue = Promise.resolve();
+
       // Save draft
-      app.ports.saveDraft.subscribe(async ({ key, value }) => {
-        await storageSet(key, value);
-        app.ports.storageDraftSaved.send(null);
+      app.ports.saveDraft.subscribe(({ key, value }) => {
+        draftQueue = draftQueue
+          .then(() => storageSet(key, value))
+          .then(() => app.ports.storageDraftSaved.send(null));
       });
 
       // Delete draft
-      app.ports.deleteDraft.subscribe(async ({ key }) => {
-        await storageDelete(key);
+      app.ports.deleteDraft.subscribe(({ key }) => {
+        draftQueue = draftQueue.then(() => storageDelete(key));
       });
     </script>
   </body>

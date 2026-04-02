@@ -109,7 +109,16 @@ updateLog msg model db routines =
                             Dict.get (currentAbbr draft) draft.setsCache
 
                         sets =
-                            cached |> Maybe.map .sets |> Maybe.withDefault [ emptySet ]
+                            cached
+                                |> Maybe.map
+                                    (\c ->
+                                        if List.isEmpty c.sets then
+                                            [ emptySet ]
+
+                                        else
+                                            c.sets
+                                    )
+                                |> Maybe.withDefault [ emptySet ]
 
                         config =
                             cached |> Maybe.map .config |> Maybe.withDefault ""
@@ -161,7 +170,14 @@ updateLog msg model db routines =
 
                 restoredSets =
                     Dict.get newAbbr updatedCache
-                        |> Maybe.map .sets
+                        |> Maybe.map
+                            (\c ->
+                                if List.isEmpty c.sets then
+                                    [ emptySet ]
+
+                                else
+                                    c.sets
+                            )
                         |> Maybe.withDefault [ emptySet ]
 
                 restoredConfig =
@@ -215,13 +231,16 @@ updateLog msg model db routines =
             let
                 cached =
                     cacheCurrentState model
+
+                newCache =
+                    Dict.insert (currentExAbbr model) cached model.setsCache
             in
             if List.isEmpty cached.sets then
                 ( model, Nothing )
 
             else
-                ( { model | setsCache = Dict.insert (currentExAbbr model) cached model.setsCache }
-                , Just (FlushDraftEffect (buildDraft model model.setsCache))
+                ( { model | setsCache = newCache }
+                , Just (FlushDraftEffect (buildDraft model newCache))
                 )
 
         SaveAndNext ->
@@ -330,7 +349,14 @@ restoreSets idx cache queue =
     List.drop idx queue
         |> List.head
         |> Maybe.andThen (\a -> Dict.get a cache)
-        |> Maybe.map .sets
+        |> Maybe.map
+            (\c ->
+                if List.isEmpty c.sets then
+                    [ emptySet ]
+
+                else
+                    c.sets
+            )
         |> Maybe.withDefault [ emptySet ]
 
 
