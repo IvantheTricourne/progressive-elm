@@ -16,18 +16,20 @@ import Page.Manage as Manage
 import Storage
 
 
+
 -- ── Seed data ─────────────────────────────────────────────────────────────────
+
 
 seedDb : Db
 seedDb =
     Dict.fromList
-        [ ( "LP",  { abbr = "LP",  fullName = "Leg Press",            sessions = [], defaultConfig = Just "Seat max, narrowish stance" } )
-        , ( "BP",  { abbr = "BP",  fullName = "Bench Press",          sessions = [], defaultConfig = Just "S+1 outer grip" } )
-        , ( "R",   { abbr = "R",   fullName = "Row",                  sessions = [], defaultConfig = Just "Seat/chest +3" } )
-        , ( "RDL", { abbr = "RDL", fullName = "Romanian Deadlift",    sessions = [], defaultConfig = Just "Chucks" } )
-        , ( "SP",  { abbr = "SP",  fullName = "Shoulder Press",       sessions = [], defaultConfig = Just "Seat +3, inner grip" } )
-        , ( "LPD", { abbr = "LPD", fullName = "Lat Pulldown",         sessions = [], defaultConfig = Nothing } )
-        , ( "LC",  { abbr = "LC",  fullName = "Leg Curl",             sessions = [], defaultConfig = Nothing } )
+        [ ( "LP", { abbr = "LP", fullName = "Leg Press", sessions = [], defaultConfig = Just "Seat max, narrowish stance" } )
+        , ( "BP", { abbr = "BP", fullName = "Bench Press", sessions = [], defaultConfig = Just "S+1 outer grip" } )
+        , ( "R", { abbr = "R", fullName = "Row", sessions = [], defaultConfig = Just "Seat/chest +3" } )
+        , ( "RDL", { abbr = "RDL", fullName = "Romanian Deadlift", sessions = [], defaultConfig = Just "Chucks" } )
+        , ( "SP", { abbr = "SP", fullName = "Shoulder Press", sessions = [], defaultConfig = Just "Seat +3, inner grip" } )
+        , ( "LPD", { abbr = "LPD", fullName = "Lat Pulldown", sessions = [], defaultConfig = Nothing } )
+        , ( "LC", { abbr = "LC", fullName = "Leg Curl", sessions = [], defaultConfig = Nothing } )
         , ( "CTE", { abbr = "CTE", fullName = "Cable Tricep Extension", sessions = [], defaultConfig = Just "Close straight bar grip" } )
         ]
 
@@ -35,28 +37,32 @@ seedDb =
 seedRoutines : Routines
 seedRoutines =
     Dict.fromList
-        [ ( "A",     { name = "Routine A",  exercises = [ "LP", "BP", "R" ],          archived = False } )
-        , ( "B",     { name = "Routine B",  exercises = [ "RDL", "SP", "LPD" ],       archived = False } )
-        , ( "Aplus", { name = "Routine A+", exercises = [ "LP", "BP", "R", "LC" ],    archived = False } )
+        [ ( "A", { name = "Routine A", exercises = [ "LP", "BP", "R" ], archived = False } )
+        , ( "B", { name = "Routine B", exercises = [ "RDL", "SP", "LPD" ], archived = False } )
+        , ( "Aplus", { name = "Routine A+", exercises = [ "LP", "BP", "R", "LC" ], archived = False } )
         , ( "Bplus", { name = "Routine B+", exercises = [ "RDL", "SP", "LPD", "CTE" ], archived = False } )
         ]
 
 
+
 -- ── Model ─────────────────────────────────────────────────────────────────────
 
+
 type alias Model =
-    { db       : Db
+    { db : Db
     , routines : Routines
-    , tab      : Tab
-    , log      : Log.LogModel
-    , history  : History.HistoryModel
-    , manage   : Manage.ManageModel
-    , today    : String
-    , loaded   : Bool
+    , tab : Tab
+    , log : Log.LogModel
+    , history : History.HistoryModel
+    , manage : Manage.ManageModel
+    , today : String
+    , loaded : Bool
     }
 
 
+
 -- ── Init ──────────────────────────────────────────────────────────────────────
+
 
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
@@ -69,20 +75,22 @@ init flags =
         exKeys =
             Dict.keys seedDb
     in
-    ( { db       = seedDb
+    ( { db = seedDb
       , routines = seedRoutines
-      , tab      = LogTab
-      , log      = Log.initLog Nothing
-      , history  = History.initHistory today exKeys
-      , manage   = Manage.initManage
-      , today    = today
-      , loaded   = False
+      , tab = LogTab
+      , log = Log.initLog Nothing
+      , history = History.initHistory today exKeys
+      , manage = Manage.initManage
+      , today = today
+      , loaded = False
       }
     , Storage.loadAll ()
     )
 
 
+
 -- ── Update ────────────────────────────────────────────────────────────────────
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -105,8 +113,11 @@ update msg model =
                 mergedDb =
                     Dict.foldl
                         (\k v acc ->
-                            if Dict.member k acc then acc
-                            else Dict.insert k v acc
+                            if Dict.member k acc then
+                                acc
+
+                            else
+                                Dict.insert k v acc
                         )
                         db
                         seedDb
@@ -115,18 +126,21 @@ update msg model =
                 mergedRoutines =
                     Dict.foldl
                         (\k v acc ->
-                            if Dict.member k acc then acc
-                            else Dict.insert k v acc
+                            if Dict.member k acc then
+                                acc
+
+                            else
+                                Dict.insert k v acc
                         )
                         routines
                         seedRoutines
             in
             ( { model
-                | db       = mergedDb
+                | db = mergedDb
                 , routines = mergedRoutines
-                , log      = Log.initLog draft
-                , history  = History.initHistory model.today (Dict.keys mergedDb)
-                , loaded   = True
+                , log = Log.initLog draft
+                , history = History.initHistory model.today (Dict.keys mergedDb)
+                , loaded = True
               }
             , Cmd.none
             )
@@ -166,13 +180,13 @@ update msg model =
                     case manResult.effect of
                         Just (Manage.SaveRoutinesEffect r) ->
                             Storage.saveRoutines
-                                { key   = "progressive_routines_v1"
+                                { key = "progressive_routines_v1"
                                 , value = E.encode 0 (encodeRoutines r)
                                 }
 
                         Just (Manage.SaveExerciseEffect abbr ex) ->
                             Storage.saveExercise
-                                { key   = "progressive_ex_" ++ abbr
+                                { key = "progressive_ex_" ++ abbr
                                 , value = E.encode 0 (encodeExercise ex)
                                 }
 
@@ -180,8 +194,8 @@ update msg model =
                             Cmd.none
             in
             ( { model
-                | manage   = manResult.model
-                , db       = newDb
+                | manage = manResult.model
+                , db = newDb
                 , routines = newRoutines
               }
             , cmd
@@ -197,7 +211,7 @@ handleLogEffect effect newLog model =
         Log.SaveDraftEffect draft ->
             ( { model | log = newLog }
             , Storage.saveDraft
-                { key   = "progressive_draft_v1"
+                { key = "progressive_draft_v1"
                 , value = E.encode 0 (Encode.encodeDraft draft)
                 }
             )
@@ -205,7 +219,7 @@ handleLogEffect effect newLog model =
         Log.FlushDraftEffect draft ->
             ( { model | log = newLog }
             , Storage.saveDraft
-                { key   = "progressive_draft_v1"
+                { key = "progressive_draft_v1"
                 , value = E.encode 0 (Encode.encodeDraft draft)
                 }
             )
@@ -217,7 +231,8 @@ handleLogEffect effect newLog model =
 
         Log.CommitSessionEffect setsCache ->
             let
-                today = model.today
+                today =
+                    model.today
 
                 ( newDb, cmds ) =
                     Dict.foldl
@@ -235,6 +250,7 @@ handleLogEffect effect newLog model =
                                                         (\s ->
                                                             if s.date == today then
                                                                 { s | sets = cached.sets }
+
                                                             else
                                                                 s
                                                         )
@@ -242,17 +258,18 @@ handleLogEffect effect newLog model =
 
                                         updatedEx =
                                             { ex
-                                                | sessions      = updatedSessions
+                                                | sessions = updatedSessions
                                                 , defaultConfig =
                                                     if String.isEmpty cached.config then
                                                         ex.defaultConfig
+
                                                     else
                                                         Just cached.config
                                             }
 
                                         saveCmd =
                                             Storage.saveExercise
-                                                { key   = "progressive_ex_" ++ abbr
+                                                { key = "progressive_ex_" ++ abbr
                                                 , value = E.encode 0 (encodeExercise updatedEx)
                                                 }
                                     in
@@ -272,14 +289,18 @@ handleLogEffect effect newLog model =
             )
 
 
+
 -- ── Subscriptions ─────────────────────────────────────────────────────────────
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Storage.storageLoaded StorageLoaded
 
 
+
 -- ── View ──────────────────────────────────────────────────────────────────────
+
 
 view : Model -> Browser.Document Msg
 view model =
@@ -289,6 +310,7 @@ view model =
             [ viewNav
             , if not model.loaded then
                 viewLoading
+
               else
                 viewScreen model
             , viewBottomNav model.tab
@@ -351,13 +373,15 @@ navBtn icon label tab current =
         ]
 
 
+
 -- ── Main ──────────────────────────────────────────────────────────────────────
+
 
 main : Program E.Value Model Msg
 main =
     Browser.document
-        { init          = init
-        , update        = update
+        { init = init
+        , update = update
         , subscriptions = subscriptions
-        , view          = view
+        , view = view
         }

@@ -15,47 +15,53 @@ import Html.Events exposing (..)
 import Model exposing (..)
 
 
+
 -- ── Model ─────────────────────────────────────────────────────────────────────
+
 
 type ManageSubView
     = RoutineList
-    | EditingRoutine (Maybe String)  -- Nothing = new
+    | EditingRoutine (Maybe String) -- Nothing = new
     | ExerciseList
     | AddingExercise
 
 
 type alias ManageModel =
-    { subView          : ManageSubView
+    { subView : ManageSubView
     , routineNameInput : String
     , selectedExercises : List String
-    , exAbbrInput      : String
-    , exNameInput      : String
+    , exAbbrInput : String
+    , exNameInput : String
     }
 
 
 initManage : ManageModel
 initManage =
-    { subView           = RoutineList
-    , routineNameInput  = ""
+    { subView = RoutineList
+    , routineNameInput = ""
     , selectedExercises = []
-    , exAbbrInput       = ""
-    , exNameInput       = ""
+    , exAbbrInput = ""
+    , exNameInput = ""
     }
 
 
+
 -- ── Effects ───────────────────────────────────────────────────────────────────
+
 
 type ManageEffect
     = SaveRoutinesEffect Routines
     | SaveExerciseEffect String Exercise
 
 
+
 -- ── Update ────────────────────────────────────────────────────────────────────
 
+
 type alias ManageUpdate =
-    { model       : ManageModel
-    , effect      : Maybe ManageEffect
-    , newDb       : Maybe Db
+    { model : ManageModel
+    , effect : Maybe ManageEffect
+    , newDb : Maybe Db
     , newRoutines : Maybe Routines
     }
 
@@ -68,21 +74,24 @@ updateManage msg model db routines =
     in
     case msg of
         ShowNewRoutine ->
-            noOp { model
-                     | subView           = EditingRoutine Nothing
-                     , routineNameInput  = ""
-                     , selectedExercises = []
-                 }
+            noOp
+                { model
+                    | subView = EditingRoutine Nothing
+                    , routineNameInput = ""
+                    , selectedExercises = []
+                }
 
         EditRoutine key ->
             let
-                r = Dict.get key routines
+                r =
+                    Dict.get key routines
             in
-            noOp { model
-                     | subView           = EditingRoutine (Just key)
-                     , routineNameInput  = r |> Maybe.map .name |> Maybe.withDefault ""
-                     , selectedExercises = r |> Maybe.map .exercises |> Maybe.withDefault []
-                 }
+            noOp
+                { model
+                    | subView = EditingRoutine (Just key)
+                    , routineNameInput = r |> Maybe.map .name |> Maybe.withDefault ""
+                    , selectedExercises = r |> Maybe.map .exercises |> Maybe.withDefault []
+                }
 
         CancelRoutineEdit ->
             noOp { model | subView = RoutineList }
@@ -95,6 +104,7 @@ updateManage msg model db routines =
                 newSelected =
                     if List.member abbr model.selectedExercises then
                         List.filter (\a -> a /= abbr) model.selectedExercises
+
                     else
                         model.selectedExercises ++ [ abbr ]
             in
@@ -102,10 +112,12 @@ updateManage msg model db routines =
 
         SaveRoutineEdit ->
             let
-                name = String.trim model.routineNameInput
+                name =
+                    String.trim model.routineNameInput
             in
             if String.isEmpty name || List.isEmpty model.selectedExercises then
                 noOp model
+
             else
                 let
                     newRoutines =
@@ -117,7 +129,8 @@ updateManage msg model db routines =
 
                             EditingRoutine Nothing ->
                                 let
-                                    key = String.replace " " "" name ++ "_" ++ String.fromInt (Dict.size routines)
+                                    key =
+                                        String.replace " " "" name ++ "_" ++ String.fromInt (Dict.size routines)
                                 in
                                 Dict.insert key
                                     { name = name, exercises = model.selectedExercises, archived = False }
@@ -126,9 +139,9 @@ updateManage msg model db routines =
                             _ ->
                                 routines
                 in
-                { model       = { model | subView = RoutineList }
-                , effect      = Just (SaveRoutinesEffect newRoutines)
-                , newDb       = Nothing
+                { model = { model | subView = RoutineList }
+                , effect = Just (SaveRoutinesEffect newRoutines)
+                , newDb = Nothing
                 , newRoutines = Just newRoutines
                 }
 
@@ -139,15 +152,17 @@ updateManage msg model db routines =
 
                 Just r ->
                     let
-                        newKey      = key ++ "_copy"
+                        newKey =
+                            key ++ "_copy"
+
                         newRoutines =
                             Dict.insert newKey
                                 { r | name = r.name ++ " (copy)" }
                                 routines
                     in
-                    { model       = model
-                    , effect      = Just (SaveRoutinesEffect newRoutines)
-                    , newDb       = Nothing
+                    { model = model
+                    , effect = Just (SaveRoutinesEffect newRoutines)
+                    , newDb = Nothing
                     , newRoutines = Just newRoutines
                     }
 
@@ -158,18 +173,19 @@ updateManage msg model db routines =
                         (Maybe.map (\r -> { r | archived = not r.archived }))
                         routines
             in
-            { model       = model
-            , effect      = Just (SaveRoutinesEffect newRoutines)
-            , newDb       = Nothing
+            { model = model
+            , effect = Just (SaveRoutinesEffect newRoutines)
+            , newDb = Nothing
             , newRoutines = Just newRoutines
             }
 
         ShowNewExercise ->
-            noOp { model
-                     | subView     = AddingExercise
-                     , exAbbrInput = ""
-                     , exNameInput = ""
-                 }
+            noOp
+                { model
+                    | subView = AddingExercise
+                    , exAbbrInput = ""
+                    , exNameInput = ""
+                }
 
         CancelExerciseEdit ->
             noOp { model | subView = ExerciseList }
@@ -182,28 +198,33 @@ updateManage msg model db routines =
 
         SaveExerciseEdit ->
             let
-                abbr     = String.trim model.exAbbrInput
-                fullName = String.trim model.exNameInput
+                abbr =
+                    String.trim model.exAbbrInput
+
+                fullName =
+                    String.trim model.exNameInput
             in
             if String.isEmpty abbr || String.length abbr < 2 || String.isEmpty fullName then
                 noOp model
+
             else if Dict.member abbr db then
                 noOp model
+
             else
                 let
                     newEx =
-                        { abbr          = abbr
-                        , fullName      = fullName
-                        , sessions      = []
+                        { abbr = abbr
+                        , fullName = fullName
+                        , sessions = []
                         , defaultConfig = Nothing
                         }
 
                     newDb =
                         Dict.insert abbr newEx db
                 in
-                { model       = { model | subView = ExerciseList }
-                , effect      = Just (SaveExerciseEffect abbr newEx)
-                , newDb       = Just newDb
+                { model = { model | subView = ExerciseList }
+                , effect = Just (SaveExerciseEffect abbr newEx)
+                , newDb = Just newDb
                 , newRoutines = Nothing
                 }
 
@@ -211,7 +232,9 @@ updateManage msg model db routines =
             noOp model
 
 
+
 -- ── View ──────────────────────────────────────────────────────────────────────
+
 
 viewManage : ManageModel -> Db -> Routines -> Html ManagePageMsg
 viewManage model db routines =
@@ -275,17 +298,41 @@ viewRoutineRow _ ( key, r ) =
         [ div [ class "flex-1 min-w-0" ]
             [ div [ class "text-sm text-white" ] [ text r.name ]
             , div [ class "text-xs font-mono text-gray-600 mt-0.5" ]
-                [ text (String.join " · " r.exercises ++ (if r.archived then " · archived" else "")) ]
+                [ text
+                    (String.join " · " r.exercises
+                        ++ (if r.archived then
+                                " · archived"
+
+                            else
+                                ""
+                           )
+                    )
+                ]
             ]
         , button [ class "text-xs text-gray-500 border border-gray-700 rounded px-2 py-1 hover:text-white", onClick (EditRoutine key) ]
             [ text "Edit" ]
         , button [ class "text-xs text-gray-500 border border-gray-700 rounded px-2 py-1 hover:text-white", onClick (CopyRoutine key) ]
             [ text "Copy" ]
         , button
-            [ class ("text-xs border rounded px-2 py-1 " ++ (if r.archived then "text-gray-500 border-gray-700 hover:text-white" else "text-red-400 border-red-900 hover:text-red-300"))
+            [ class
+                ("text-xs border rounded px-2 py-1 "
+                    ++ (if r.archived then
+                            "text-gray-500 border-gray-700 hover:text-white"
+
+                        else
+                            "text-red-400 border-red-900 hover:text-red-300"
+                       )
+                )
             , onClick (ToggleArchiveRoutine key)
             ]
-            [ text (if r.archived then "Restore" else "Archive") ]
+            [ text
+                (if r.archived then
+                    "Restore"
+
+                 else
+                    "Archive"
+                )
+            ]
         ]
 
 
@@ -307,7 +354,14 @@ viewRoutineEditor : ManageModel -> Db -> Maybe String -> Html ManagePageMsg
 viewRoutineEditor model db maybeKey =
     div [ class "bg-gray-900 border border-gray-800 rounded-xl p-4" ]
         [ p [ class "text-xs font-mono text-gray-600 uppercase tracking-wider mb-4" ]
-            [ text (if maybeKey == Nothing then "New routine" else "Edit routine") ]
+            [ text
+                (if maybeKey == Nothing then
+                    "New routine"
+
+                 else
+                    "Edit routine"
+                )
+            ]
         , div [ class "mb-4" ]
             [ label [ class "text-xs text-gray-400 block mb-1.5" ] [ text "Name" ]
             , input
@@ -326,7 +380,8 @@ viewRoutineEditor model db maybeKey =
                     |> List.map
                         (\( abbr, ex ) ->
                             let
-                                on = List.member abbr model.selectedExercises
+                                on =
+                                    List.member abbr model.selectedExercises
                             in
                             div
                                 [ class "flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer"
@@ -345,7 +400,12 @@ viewRoutineEditor model db maybeKey =
                                         , ( "bg-gray-700 border-gray-600", not on )
                                         ]
                                     ]
-                                    [ if on then text "✓" else text "" ]
+                                    [ if on then
+                                        text "✓"
+
+                                      else
+                                        text ""
+                                    ]
                                 ]
                         )
                 )

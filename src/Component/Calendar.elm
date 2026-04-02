@@ -1,8 +1,8 @@
 module Component.Calendar exposing
     ( CalendarState
     , initCalendar
-    , viewCalendar
     , viewCalStats
+    , viewCalendar
     )
 
 import Dict exposing (Dict)
@@ -14,8 +14,8 @@ import Set as S
 
 
 type alias CalendarState =
-    { year         : Int
-    , month        : Int   -- 1-indexed
+    { year : Int
+    , month : Int -- 1-indexed
     , selectedDate : Maybe String
     }
 
@@ -25,11 +25,13 @@ initCalendar y m =
     { year = y, month = m, selectedDate = Nothing }
 
 
+
 -- ── Stats row ─────────────────────────────────────────────────────────────────
+
 
 viewCalStats :
     { thisMonth : Int
-    , thisWeek  : Int
+    , thisWeek : Int
     , daysSince : Maybe Int
     }
     -> Html msg
@@ -52,19 +54,28 @@ statCard val lbl =
 formatDaysSince : Maybe Int -> String
 formatDaysSince d =
     case d of
-        Nothing -> "—"
-        Just 0  -> "today"
-        Just 1  -> "1d"
-        Just n  -> String.fromInt n ++ "d"
+        Nothing ->
+            "—"
+
+        Just 0 ->
+            "today"
+
+        Just 1 ->
+            "1d"
+
+        Just n ->
+            String.fromInt n ++ "d"
+
 
 
 -- ── Calendar grid ─────────────────────────────────────────────────────────────
 
+
 viewCalendar :
-    { state       : CalendarState
-    , sessionDates : Dict String (List String)  -- date → routine names
-    , today       : String
-    , onNav       : Int -> msg
+    { state : CalendarState
+    , sessionDates : Dict String (List String) -- date → routine names
+    , today : String
+    , onNav : Int -> msg
     , onSelectDay : String -> msg
     }
     -> Html msg
@@ -78,8 +89,12 @@ viewCalendar cfg =
 viewCalNav : CalendarState -> String -> (Int -> msg) -> Html msg
 viewCalNav state today onNav =
     let
-        todayYear  = String.left 4 today |> String.toInt |> Maybe.withDefault 2026
-        todayMonth = String.slice 5 7 today |> String.toInt |> Maybe.withDefault 1
+        todayYear =
+            String.left 4 today |> String.toInt |> Maybe.withDefault 2026
+
+        todayMonth =
+            String.slice 5 7 today |> String.toInt |> Maybe.withDefault 1
+
         isCurrentMonth =
             state.year == todayYear && state.month == todayMonth
     in
@@ -102,19 +117,27 @@ viewCalNav state today onNav =
 
 
 viewCalGrid :
-    { state        : CalendarState
+    { state : CalendarState
     , sessionDates : Dict String (List String)
-    , today        : String
-    , onNav        : Int -> msg
-    , onSelectDay  : String -> msg
+    , today : String
+    , onNav : Int -> msg
+    , onSelectDay : String -> msg
     }
     -> Html msg
 viewCalGrid cfg =
     let
-        firstDow = firstDayOfWeek cfg.state.year cfg.state.month  -- 0=Sun
-        daysInMon = daysInMonth cfg.state.year cfg.state.month
-        padding = List.repeat firstDow ()
-        days = List.range 1 daysInMon
+        firstDow =
+            firstDayOfWeek cfg.state.year cfg.state.month
+
+        -- 0=Sun
+        daysInMon =
+            daysInMonth cfg.state.year cfg.state.month
+
+        padding =
+            List.repeat firstDow ()
+
+        days =
+            List.range 1 daysInMon
     in
     div [ class "grid grid-cols-7 gap-1" ]
         (dowHeaders
@@ -124,11 +147,11 @@ viewCalGrid cfg =
 
 
 viewCalDay :
-    { state        : CalendarState
+    { state : CalendarState
     , sessionDates : Dict String (List String)
-    , today        : String
-    , onNav        : Int -> msg
-    , onSelectDay  : String -> msg
+    , today : String
+    , onNav : Int -> msg
+    , onSelectDay : String -> msg
     }
     -> Int
     -> Html msg
@@ -160,10 +183,22 @@ viewCalDay cfg day =
             if hasSession then
                 baseClass
                     ++ "bg-lime-950 border-lime-900 text-white cursor-pointer "
-                    ++ (if isSelected then "border-lime-400 " else "")
-                    ++ (if isToday then "border-lime-400 " else "")
+                    ++ (if isSelected then
+                            "border-lime-400 "
+
+                        else
+                            ""
+                       )
+                    ++ (if isToday then
+                            "border-lime-400 "
+
+                        else
+                            ""
+                       )
+
             else if isToday then
                 baseClass ++ "bg-gray-900 border-gray-700 text-gray-400 "
+
             else
                 baseClass ++ "bg-gray-900 border-gray-800 text-gray-600 "
 
@@ -178,6 +213,7 @@ viewCalDay cfg day =
         ([ class dayClass ]
             ++ (if hasSession then
                     [ onClick (cfg.onSelectDay dateStr) ]
+
                 else
                     []
                )
@@ -185,6 +221,7 @@ viewCalDay cfg day =
         [ text (String.fromInt day)
         , if hasSession then
             div [ class "text-lime-600 text-xs leading-none mt-0.5" ] [ text routineLabel ]
+
           else
             text ""
         ]
@@ -200,23 +237,48 @@ dowHeaders =
             )
 
 
+
 -- ── Date helpers ──────────────────────────────────────────────────────────────
+
 
 monthName : Int -> String
 monthName m =
     case m of
-        1  -> "January"
-        2  -> "February"
-        3  -> "March"
-        4  -> "April"
-        5  -> "May"
-        6  -> "June"
-        7  -> "July"
-        8  -> "August"
-        9  -> "September"
-        10 -> "October"
-        11 -> "November"
-        _  -> "December"
+        1 ->
+            "January"
+
+        2 ->
+            "February"
+
+        3 ->
+            "March"
+
+        4 ->
+            "April"
+
+        5 ->
+            "May"
+
+        6 ->
+            "June"
+
+        7 ->
+            "July"
+
+        8 ->
+            "August"
+
+        9 ->
+            "September"
+
+        10 ->
+            "October"
+
+        11 ->
+            "November"
+
+        _ ->
+            "December"
 
 
 daysInMonth : Int -> Int -> Int
@@ -225,22 +287,47 @@ daysInMonth y m =
         2 ->
             if modBy 4 y == 0 && (modBy 100 y /= 0 || modBy 400 y == 0) then
                 29
+
             else
                 28
-        4  -> 30
-        6  -> 30
-        9  -> 30
-        11 -> 30
-        _  -> 31
+
+        4 ->
+            30
+
+        6 ->
+            30
+
+        9 ->
+            30
+
+        11 ->
+            30
+
+        _ ->
+            31
+
 
 
 -- Day of week for 1st of month, 0=Sun using Tomohiko Sakamoto's algorithm
+
+
 firstDayOfWeek : Int -> Int -> Int
 firstDayOfWeek year month =
     let
-        t = [ 0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4 ]
-        y = if month < 3 then year - 1 else year
-        m = month
-        tableVal = List.drop (m - 1) t |> List.head |> Maybe.withDefault 0
+        t =
+            [ 0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4 ]
+
+        y =
+            if month < 3 then
+                year - 1
+
+            else
+                year
+
+        m =
+            month
+
+        tableVal =
+            List.drop (m - 1) t |> List.head |> Maybe.withDefault 0
     in
     modBy 7 (y + y // 4 - y // 100 + y // 400 + tableVal + 1)

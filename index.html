@@ -1,146 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>progressive/</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            gray: {
-              950: '#0e0e0f',
-            }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>progressive/</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              gray: {
+                950: "#0e0e0f",
+              },
+            },
+            fontFamily: {
+              sans: ["DM Sans", "sans-serif"],
+              mono: ["DM Mono", "monospace"],
+            },
           },
-          fontFamily: {
-            sans: ['DM Sans', 'sans-serif'],
-            mono: ['DM Mono', 'monospace'],
-          }
-        }
+        },
+      };
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
       }
-    }
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .active\:scale-97:active { transform: scale(0.97); }
-    .active\:scale-98:active { transform: scale(0.98); }
-  </style>
-</head>
-<body class="bg-gray-950">
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .active\:scale-97:active {
+        transform: scale(0.97);
+      }
+      .active\:scale-98:active {
+        transform: scale(0.98);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-950">
+    <div id="elm-app"></div>
 
-<div id="elm-app"></div>
+    <!-- Compiled Elm output -->
+    <script src="dist/index.js"></script>
 
-<!-- Compiled Elm output -->
-<script src="dist/index.js"></script>
+    <script>
+      // ── Storage shim ──────────────────────────────────────────────────────────────
+      // Bridges Elm ports ↔ window.storage (Claude Artifact) or localStorage fallback
 
-<script>
-// ── Storage shim ──────────────────────────────────────────────────────────────
-// Bridges Elm ports ↔ window.storage (Claude Artifact) or localStorage fallback
+      const EX_PREFIX = "progressive_ex_";
+      const DRAFT_KEY = "progressive_draft_v1";
+      const ROUTINES_KEY = "progressive_routines_v1";
+      const EX_KEYS = ["LP", "BP", "R", "RDL", "SP", "LPD", "LC", "CTE"];
 
-const EX_PREFIX    = 'progressive_ex_';
-const DRAFT_KEY    = 'progressive_draft_v1';
-const ROUTINES_KEY = 'progressive_routines_v1';
-const EX_KEYS      = ['LP','BP','R','RDL','SP','LPD','LC','CTE'];
+      // Detect storage backend
+      async function storageGet(key) {
+        try {
+          if (typeof window.storage !== "undefined") {
+            const r = await window.storage.get(key, false);
+            return r ? r.value : null;
+          }
+        } catch {}
+        return localStorage.getItem(key);
+      }
 
-// Detect storage backend
-async function storageGet(key) {
-  try {
-    if (typeof window.storage !== 'undefined') {
-      const r = await window.storage.get(key, false);
-      return r ? r.value : null;
-    }
-  } catch {}
-  return localStorage.getItem(key);
-}
+      async function storageSet(key, value) {
+        try {
+          if (typeof window.storage !== "undefined") {
+            await window.storage.set(key, value, false);
+            return;
+          }
+        } catch {}
+        localStorage.setItem(key, value);
+      }
 
-async function storageSet(key, value) {
-  try {
-    if (typeof window.storage !== 'undefined') {
-      await window.storage.set(key, value, false);
-      return;
-    }
-  } catch {}
-  localStorage.setItem(key, value);
-}
+      async function storageDelete(key) {
+        try {
+          if (typeof window.storage !== "undefined") {
+            await window.storage.delete(key, false);
+            return;
+          }
+        } catch {}
+        localStorage.removeItem(key);
+      }
 
-async function storageDelete(key) {
-  try {
-    if (typeof window.storage !== 'undefined') {
-      await window.storage.delete(key, false);
-      return;
-    }
-  } catch {}
-  localStorage.removeItem(key);
-}
+      // ── Init ──────────────────────────────────────────────────────────────────────
+      const today = new Date().toISOString().slice(0, 10);
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-const today = new Date().toISOString().slice(0, 10);
+      const app = Elm.Main.init({
+        node: document.getElementById("elm-app"),
+        flags: { today },
+      });
 
-const app = Elm.Main.init({
-  node: document.getElementById('elm-app'),
-  flags: { today }
-});
+      // ── Port handlers ─────────────────────────────────────────────────────────────
 
-// ── Port handlers ─────────────────────────────────────────────────────────────
+      // Load all data on init
+      app.ports.loadAll.subscribe(async () => {
+        // Load exercises
+        const db = {};
+        for (const abbr of EX_KEYS) {
+          try {
+            const val = await storageGet(EX_PREFIX + abbr);
+            if (val) db[abbr] = JSON.parse(val);
+          } catch {}
+        }
 
-// Load all data on init
-app.ports.loadAll.subscribe(async () => {
-  // Load exercises
-  const db = {};
-  for (const abbr of EX_KEYS) {
-    try {
-      const val = await storageGet(EX_PREFIX + abbr);
-      if (val) db[abbr] = JSON.parse(val);
-    } catch {}
-  }
+        // Load routines
+        let routines = null;
+        try {
+          const val = await storageGet(ROUTINES_KEY);
+          if (val) routines = JSON.parse(val);
+        } catch {}
 
-  // Load routines
-  let routines = null;
-  try {
-    const val = await storageGet(ROUTINES_KEY);
-    if (val) routines = JSON.parse(val);
-  } catch {}
+        // Load draft
+        let draft = null;
+        try {
+          const val = await storageGet(DRAFT_KEY);
+          if (val) draft = JSON.parse(val);
+        } catch {}
 
-  // Load draft
-  let draft = null;
-  try {
-    const val = await storageGet(DRAFT_KEY);
-    if (val) draft = JSON.parse(val);
-  } catch {}
+        app.ports.storageLoaded.send({
+          db: Object.keys(db).length > 0 ? db : null,
+          routines: routines,
+          draft: draft,
+        });
+      });
 
-  app.ports.storageLoaded.send({
-    db:       Object.keys(db).length > 0 ? db : null,
-    routines: routines,
-    draft:    draft
-  });
-});
+      // Save a single exercise
+      app.ports.saveExercise.subscribe(async ({ key, value }) => {
+        await storageSet(key, value);
+      });
 
-// Save a single exercise
-app.ports.saveExercise.subscribe(async ({ key, value }) => {
-  await storageSet(key, value);
-});
+      // Save routines
+      app.ports.saveRoutines.subscribe(async ({ key, value }) => {
+        await storageSet(key, value);
+        app.ports.storageRoutinesSaved.send(null);
+      });
 
-// Save routines
-app.ports.saveRoutines.subscribe(async ({ key, value }) => {
-  await storageSet(key, value);
-  app.ports.storageRoutinesSaved.send(null);
-});
+      // Save draft
+      app.ports.saveDraft.subscribe(async ({ key, value }) => {
+        await storageSet(key, value);
+        app.ports.storageDraftSaved.send(null);
+      });
 
-// Save draft
-app.ports.saveDraft.subscribe(async ({ key, value }) => {
-  await storageSet(key, value);
-  app.ports.storageDraftSaved.send(null);
-});
-
-// Delete draft
-app.ports.deleteDraft.subscribe(async ({ key }) => {
-  await storageDelete(key);
-});
-</script>
-
-</body>
+      // Delete draft
+      app.ports.deleteDraft.subscribe(async ({ key }) => {
+        await storageDelete(key);
+      });
+    </script>
+  </body>
 </html>

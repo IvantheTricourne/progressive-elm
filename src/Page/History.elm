@@ -16,32 +16,39 @@ import Model exposing (..)
 import Set as S
 
 
+
 -- ── Model ─────────────────────────────────────────────────────────────────────
 
+
 type alias HistoryModel =
-    { view           : HistoryView
-    , selectedEx     : String
+    { view : HistoryView
+    , selectedEx : String
     , selectedRoutine : Maybe String
-    , calendar       : CalendarState
-    , today          : String
+    , calendar : CalendarState
+    , today : String
     }
 
 
 initHistory : String -> List String -> HistoryModel
 initHistory today exKeys =
     let
-        year  = String.left 4 today |> String.toInt |> Maybe.withDefault 2026
-        month = String.slice 5 7 today |> String.toInt |> Maybe.withDefault 1
+        year =
+            String.left 4 today |> String.toInt |> Maybe.withDefault 2026
+
+        month =
+            String.slice 5 7 today |> String.toInt |> Maybe.withDefault 1
     in
-    { view            = CalendarView
-    , selectedEx      = List.head exKeys |> Maybe.withDefault "LP"
+    { view = CalendarView
+    , selectedEx = List.head exKeys |> Maybe.withDefault "LP"
     , selectedRoutine = Nothing
-    , calendar        = initCalendar year month
-    , today           = today
+    , calendar = initCalendar year month
+    , today = today
     }
 
 
+
 -- ── Update ────────────────────────────────────────────────────────────────────
+
 
 updateHistory : HistoryPageMsg -> HistoryModel -> HistoryModel
 updateHistory msg model =
@@ -57,22 +64,35 @@ updateHistory msg model =
 
         CalendarNav dir ->
             let
-                cal   = model.calendar
-                newM  = cal.month + dir
+                cal =
+                    model.calendar
+
+                newM =
+                    cal.month + dir
+
                 ( y, m ) =
-                    if newM > 12 then ( cal.year + 1, 1 )
-                    else if newM < 1 then ( cal.year - 1, 12 )
-                    else ( cal.year, newM )
+                    if newM > 12 then
+                        ( cal.year + 1, 1 )
+
+                    else if newM < 1 then
+                        ( cal.year - 1, 12 )
+
+                    else
+                        ( cal.year, newM )
             in
             { model | calendar = { cal | year = y, month = m, selectedDate = Nothing } }
 
         SelectCalDay date ->
-            let cal = model.calendar
+            let
+                cal =
+                    model.calendar
             in
             { model | calendar = { cal | selectedDate = Just date } }
 
 
+
 -- ── View ──────────────────────────────────────────────────────────────────────
+
 
 viewHistory : HistoryModel -> Db -> Routines -> List String -> Html HistoryPageMsg
 viewHistory model db routines exKeys =
@@ -81,9 +101,14 @@ viewHistory model db routines exKeys =
             [ text "History" ]
         , viewToggle model.view
         , case model.view of
-            ByExercise  -> viewByExercise model db exKeys
-            ByRoutine   -> viewByRoutine model db routines
-            CalendarView -> viewCalendarView model db routines
+            ByExercise ->
+                viewByExercise model db exKeys
+
+            ByRoutine ->
+                viewByRoutine model db routines
+
+            CalendarView ->
+                viewCalendarView model db routines
         ]
 
 
@@ -91,8 +116,8 @@ viewToggle : HistoryView -> Html HistoryPageMsg
 viewToggle current =
     div [ class "flex gap-1 bg-gray-900 border border-gray-800 rounded-lg p-0.5 mb-4" ]
         [ toggleBtn "By exercise" (current == ByExercise) (SetHistoryView ByExercise)
-        , toggleBtn "By routine"  (current == ByRoutine)  (SetHistoryView ByRoutine)
-        , toggleBtn "Calendar"    (current == CalendarView) (SetHistoryView CalendarView)
+        , toggleBtn "By routine" (current == ByRoutine) (SetHistoryView ByRoutine)
+        , toggleBtn "Calendar" (current == CalendarView) (SetHistoryView CalendarView)
         ]
 
 
@@ -109,7 +134,9 @@ toggleBtn label isActive msg =
         [ text label ]
 
 
+
 -- ── By Exercise ───────────────────────────────────────────────────────────────
+
 
 viewByExercise : HistoryModel -> Db -> List String -> Html HistoryPageMsg
 viewByExercise model db exKeys =
@@ -134,7 +161,6 @@ viewByExercise model db exKeys =
                 )
                 exKeys
             )
-
         , case ex of
             Nothing ->
                 text ""
@@ -155,8 +181,11 @@ viewSessionHistory abbr ex =
         (List.map
             (\sess ->
                 let
-                    badges  = computeBadges sess ex.sessions
-                    topB    = topBadge badges
+                    badges =
+                        computeBadges sess ex.sessions
+
+                    topB =
+                        topBadge badges
                 in
                 div [ class "bg-gray-900 border border-gray-800 rounded-xl p-4" ]
                     [ div [ class "flex items-center justify-between mb-3" ]
@@ -164,8 +193,11 @@ viewSessionHistory abbr ex =
                             [ text
                                 (sess.date
                                     ++ (case ex.defaultConfig of
-                                            Just c  -> " · " ++ c
-                                            Nothing -> ""
+                                            Just c ->
+                                                " · " ++ c
+
+                                            Nothing ->
+                                                ""
                                        )
                                 )
                             ]
@@ -185,7 +217,9 @@ viewSessionHistory abbr ex =
         )
 
 
+
 -- ── By Routine ────────────────────────────────────────────────────────────────
+
 
 viewByRoutine : HistoryModel -> Db -> Routines -> Html HistoryPageMsg
 viewByRoutine model db routines =
@@ -197,15 +231,24 @@ viewByRoutine model db routines =
         -- Default to first routine with complete sessions
         effectiveKey =
             case model.selectedRoutine of
-                Just k  -> k
+                Just k ->
+                    k
+
                 Nothing ->
                     activeRoutines
-                        |> List.filter (\( _, r ) ->
-                            let ds = List.map (\a -> Dict.get a db |> Maybe.map (\e -> List.map .date e.sessions) |> Maybe.withDefault []) r.exercises
-                            in case List.head ds of
-                                Nothing -> False
-                                Just first -> List.any (\d -> List.all (List.member d) ds) first
-                          )
+                        |> List.filter
+                            (\( _, r ) ->
+                                let
+                                    ds =
+                                        List.map (\a -> Dict.get a db |> Maybe.map (\e -> List.map .date e.sessions) |> Maybe.withDefault []) r.exercises
+                                in
+                                case List.head ds of
+                                    Nothing ->
+                                        False
+
+                                    Just first ->
+                                        List.any (\d -> List.all (List.member d) ds) first
+                            )
                         |> List.head
                         |> Maybe.map Tuple.first
                         |> Maybe.withDefault ""
@@ -217,10 +260,16 @@ viewByRoutine model db routines =
                 (\( key, r ) ->
                     let
                         hasComplete =
-                            let ds = List.map (\a -> Dict.get a db |> Maybe.map (\e -> List.map .date e.sessions) |> Maybe.withDefault []) r.exercises
-                            in case List.head ds of
-                                Nothing -> False
-                                Just first -> List.any (\d -> List.all (List.member d) ds) first
+                            let
+                                ds =
+                                    List.map (\a -> Dict.get a db |> Maybe.map (\e -> List.map .date e.sessions) |> Maybe.withDefault []) r.exercises
+                            in
+                            case List.head ds of
+                                Nothing ->
+                                    False
+
+                                Just first ->
+                                    List.any (\d -> List.all (List.member d) ds) first
                     in
                     div
                         [ class "shrink-0 px-4 py-1.5 rounded-full border text-sm font-mono transition-all"
@@ -229,7 +278,11 @@ viewByRoutine model db routines =
                             , ( "bg-gray-900 text-gray-400 border-gray-800 cursor-pointer", key /= effectiveKey && hasComplete )
                             , ( "opacity-30 cursor-default", not hasComplete && key /= effectiveKey )
                             ]
-                        , if hasComplete then onClick (SelectRoutineSummary key) else class ""
+                        , if hasComplete then
+                            onClick (SelectRoutineSummary key)
+
+                          else
+                            class ""
                         ]
                         [ text r.name ]
                 )
@@ -244,10 +297,16 @@ viewByRoutine model db routines =
             Just r ->
                 let
                     completeDates =
-                        let ds = List.map (\a -> Dict.get a db |> Maybe.map (\e -> List.map .date e.sessions) |> Maybe.withDefault []) r.exercises
-                        in case List.head ds of
-                            Nothing -> []
-                            Just first -> List.filter (\d -> List.all (List.member d) ds) first
+                        let
+                            ds =
+                                List.map (\a -> Dict.get a db |> Maybe.map (\e -> List.map .date e.sessions) |> Maybe.withDefault []) r.exercises
+                        in
+                        case List.head ds of
+                            Nothing ->
+                                []
+
+                            Just first ->
+                                List.filter (\d -> List.all (List.member d) ds) first
 
                     completeDateSet =
                         S.fromList completeDates
@@ -290,32 +349,54 @@ viewRoutineSummaryCard abbr db completeDates today =
 
         dateLabel =
             case daysSince of
-                Nothing -> Nothing
-                Just 0  -> Just "today"
-                Just 1  -> Just "yesterday"
-                Just n  -> Just (String.fromInt n ++ "d ago")
+                Nothing ->
+                    Nothing
+
+                Just 0 ->
+                    Just "today"
+
+                Just 1 ->
+                    Just "yesterday"
+
+                Just n ->
+                    Just (String.fromInt n ++ "d ago")
 
         trend =
             if List.length validSessions >= 2 then
                 let
-                    recent = List.reverse validSessions |> List.take 3 |> List.reverse
-                    ws = List.map (\s -> maxWeightFromSets s.sets) recent
+                    recent =
+                        List.reverse validSessions |> List.take 3 |> List.reverse
+
+                    ws =
+                        List.map (\s -> maxWeightFromSets s.sets) recent
                 in
                 case List.reverse ws of
                     last :: prev :: _ ->
-                        if last > prev then Just "↑"
-                        else if last < prev then Just "↓"
-                        else Just "→"
-                    _ -> Just "→"
+                        if last > prev then
+                            Just "↑"
+
+                        else if last < prev then
+                            Just "↓"
+
+                        else
+                            Just "→"
+
+                    _ ->
+                        Just "→"
+
             else
                 Nothing
 
         badges =
             case lastSess of
-                Nothing -> []
-                Just s  -> computeBadges s validSessions
+                Nothing ->
+                    []
 
-        topB = topBadge badges
+                Just s ->
+                    computeBadges s validSessions
+
+        topB =
+            topBadge badges
     in
     div
         [ class "bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-gray-700"
@@ -329,13 +410,19 @@ viewRoutineSummaryCard abbr db completeDates today =
             , div [ class "font-mono text-lg font-medium text-white" ]
                 [ text
                     (case lastWeight of
-                        Just w  -> String.fromFloat w ++ " lb"
-                        Nothing -> "—"
+                        Just w ->
+                            String.fromFloat w ++ " lb"
+
+                        Nothing ->
+                            "—"
                     )
                 ]
             , case dateLabel of
-                Just d  -> div [ class "font-mono text-xs text-gray-600 mt-0.5" ] [ text d ]
-                Nothing -> text ""
+                Just d ->
+                    div [ class "font-mono text-xs text-gray-600 mt-0.5" ] [ text d ]
+
+                Nothing ->
+                    text ""
             ]
         , div [ class "flex flex-col items-end gap-1 shrink-0" ]
             [ case ( trend, hasData ) of
@@ -364,7 +451,9 @@ viewRoutineSummaryCard abbr db completeDates today =
         ]
 
 
+
 -- ── Calendar view ─────────────────────────────────────────────────────────────
+
 
 viewCalendarView : HistoryModel -> Db -> Routines -> Html HistoryPageMsg
 viewCalendarView model db routines =
@@ -375,7 +464,9 @@ viewCalendarView model db routines =
         allDates =
             Dict.keys sessionDateMap |> List.sort
 
-        now = model.today
+        now =
+            model.today
+
         thisMonth =
             List.filter (\d -> String.left 7 d == String.left 7 now) allDates
 
@@ -388,15 +479,15 @@ viewCalendarView model db routines =
     div []
         [ viewCalStats
             { thisMonth = List.length thisMonth
-            , thisWeek  = List.length thisWeek
+            , thisWeek = List.length thisWeek
             , daysSince = daysSinceVal
             }
         , viewCalendar
-            { state        = model.calendar
+            { state = model.calendar
             , sessionDates = sessionDateMap
-            , today        = model.today
-            , onNav        = CalendarNav
-            , onSelectDay  = SelectCalDay
+            , today = model.today
+            , onNav = CalendarNav
+            , onSelectDay = SelectCalDay
             }
         , case model.calendar.selectedDate of
             Nothing ->
@@ -446,7 +537,9 @@ viewCalDayDetail date db routines sessionDateMap =
         ]
 
 
+
 -- ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 buildSessionDateMap : Db -> Routines -> Dict String (List String)
 buildSessionDateMap db routines =
@@ -467,7 +560,9 @@ buildSessionDateMap db routines =
 
                     completeDates =
                         case dateSets of
-                            [] -> S.empty
+                            [] ->
+                                S.empty
+
                             first :: rest ->
                                 List.foldl S.intersect first rest
                 in
@@ -508,8 +603,11 @@ daysAgo today dateStr =
                     Nothing
     in
     case ( parseDateParts today, parseDateParts dateStr ) of
-        ( Just t, Just d ) -> t - d
-        _ -> 0
+        ( Just t, Just d ) ->
+            t - d
+
+        _ ->
+            0
 
 
 dedupe : List a -> List a
@@ -518,6 +616,7 @@ dedupe list =
         (\x acc ->
             if List.member x acc then
                 acc
+
             else
                 acc ++ [ x ]
         )

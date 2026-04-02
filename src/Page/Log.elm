@@ -15,7 +15,9 @@ import Html.Events exposing (..)
 import Model exposing (..)
 
 
+
 -- ── Model ─────────────────────────────────────────────────────────────────────
+
 
 type LogStep
     = PickRoutine
@@ -24,33 +26,33 @@ type LogStep
 
 
 type alias LogModel =
-    { step            : LogStep
+    { step : LogStep
     , selectedRoutine : Maybe String
-    , sessionQueue    : List String
-    , sessionIdx      : Int
-    , currentSets     : List Set
-    , setsCache       : Dict String CachedExercise
-    , configValue     : String
-    , draft           : Maybe Draft
+    , sessionQueue : List String
+    , sessionIdx : Int
+    , currentSets : List Set
+    , setsCache : Dict String CachedExercise
+    , configValue : String
+    , draft : Maybe Draft
     }
 
 
 type alias CachedExercise =
-    { sets   : List Set
+    { sets : List Set
     , config : String
     }
 
 
 initLog : Maybe Draft -> LogModel
 initLog draft =
-    { step            = PickRoutine
+    { step = PickRoutine
     , selectedRoutine = Nothing
-    , sessionQueue    = []
-    , sessionIdx      = 0
-    , currentSets     = [ emptySet ]
-    , setsCache       = Dict.empty
-    , configValue     = ""
-    , draft           = draft
+    , sessionQueue = []
+    , sessionIdx = 0
+    , currentSets = [ emptySet ]
+    , setsCache = Dict.empty
+    , configValue = ""
+    , draft = draft
     }
 
 
@@ -59,7 +61,9 @@ emptySet =
     { weight = Nothing, reps = Nothing, outcome = Clean, note = Nothing }
 
 
+
 -- ── Update ────────────────────────────────────────────────────────────────────
+
 
 updateLog : LogPageMsg -> LogModel -> Db -> Routines -> ( LogModel, Maybe LogEffect )
 updateLog msg model db routines =
@@ -80,12 +84,12 @@ updateLog msg model db routines =
                                 |> Maybe.withDefault []
                     in
                     ( { model
-                        | step         = LoggingSets
+                        | step = LoggingSets
                         , sessionQueue = queue
-                        , sessionIdx   = 0
-                        , setsCache    = Dict.empty
-                        , currentSets  = [ emptySet ]
-                        , configValue  =
+                        , sessionIdx = 0
+                        , setsCache = Dict.empty
+                        , currentSets = [ emptySet ]
+                        , configValue =
                             List.head queue
                                 |> Maybe.andThen (\a -> Dict.get a db)
                                 |> Maybe.andThen .defaultConfig
@@ -111,13 +115,13 @@ updateLog msg model db routines =
                             cached |> Maybe.map .config |> Maybe.withDefault ""
                     in
                     ( { model
-                        | step         = LoggingSets
+                        | step = LoggingSets
                         , selectedRoutine = Just draft.routine
                         , sessionQueue = draft.sessionQueue
-                        , sessionIdx   = draft.sessionIdx
-                        , setsCache    = Dict.map (\_ c -> c) draft.setsCache
-                        , currentSets  = sets
-                        , configValue  = config
+                        , sessionIdx = draft.sessionIdx
+                        , setsCache = Dict.map (\_ c -> c) draft.setsCache
+                        , currentSets = sets
+                        , configValue = config
                       }
                     , Nothing
                     )
@@ -134,9 +138,9 @@ updateLog msg model db routines =
                     Dict.insert (currentExAbbr model) cached model.setsCache
             in
             ( { model
-                | step         = PickRoutine
+                | step = PickRoutine
                 , selectedRoutine = Nothing
-                , setsCache    = newCache
+                , setsCache = newCache
               }
             , Just (SaveDraftEffect (buildDraft model newCache))
             )
@@ -166,8 +170,8 @@ updateLog msg model db routines =
                         |> Maybe.withDefault ""
             in
             ( { model
-                | sessionIdx  = newIdx
-                , setsCache   = updatedCache
+                | sessionIdx = newIdx
+                , setsCache = updatedCache
                 , currentSets = restoredSets
                 , configValue = restoredConfig
               }
@@ -209,10 +213,12 @@ updateLog msg model db routines =
 
         SaveCurrentExercise ->
             let
-                cached = cacheCurrentState model
+                cached =
+                    cacheCurrentState model
             in
             if List.isEmpty cached.sets then
                 ( model, Nothing )
+
             else
                 ( { model | setsCache = Dict.insert (currentExAbbr model) cached model.setsCache }
                 , Just (FlushDraftEffect (buildDraft model model.setsCache))
@@ -220,18 +226,24 @@ updateLog msg model db routines =
 
         SaveAndNext ->
             let
-                cached     = cacheCurrentState model
-                newCache   = Dict.insert (currentExAbbr model) cached model.setsCache
-                isLastEx   = model.sessionIdx >= List.length model.sessionQueue - 1
+                cached =
+                    cacheCurrentState model
+
+                newCache =
+                    Dict.insert (currentExAbbr model) cached model.setsCache
+
+                isLastEx =
+                    model.sessionIdx >= List.length model.sessionQueue - 1
             in
             if isLastEx then
                 ( { model | setsCache = newCache, step = FinishConfirm }
                 , Nothing
                 )
+
             else
                 ( { model
-                    | sessionIdx  = model.sessionIdx + 1
-                    , setsCache   = newCache
+                    | sessionIdx = model.sessionIdx + 1
+                    , setsCache = newCache
                     , currentSets = restoreSets (model.sessionIdx + 1) newCache model.sessionQueue
                     , configValue = ""
                   }
@@ -240,17 +252,20 @@ updateLog msg model db routines =
 
         ShowFinishConfirm ->
             let
-                cached   = cacheCurrentState model
-                newCache = Dict.insert (currentExAbbr model) cached model.setsCache
+                cached =
+                    cacheCurrentState model
+
+                newCache =
+                    Dict.insert (currentExAbbr model) cached model.setsCache
             in
             ( { model | setsCache = newCache, step = FinishConfirm }, Nothing )
 
         ConfirmFinish ->
             ( { model
-                | step            = PickRoutine
+                | step = PickRoutine
                 , selectedRoutine = Nothing
-                , setsCache       = Dict.empty
-                , currentSets     = [ emptySet ]
+                , setsCache = Dict.empty
+                , currentSets = [ emptySet ]
               }
             , Just (CommitSessionEffect model.setsCache)
             )
@@ -262,7 +277,9 @@ updateLog msg model db routines =
             ( model, Nothing )
 
 
+
 -- ── Effects ───────────────────────────────────────────────────────────────────
+
 
 type LogEffect
     = SaveDraftEffect Draft
@@ -271,7 +288,9 @@ type LogEffect
     | CommitSessionEffect (Dict String CachedExercise)
 
 
+
 -- ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 currentExAbbr : LogModel -> String
 currentExAbbr model =
@@ -298,11 +317,11 @@ cacheCurrentState model =
 
 buildDraft : LogModel -> Dict String CachedExercise -> Draft
 buildDraft model cache =
-    { routine      = Maybe.withDefault "" model.selectedRoutine
+    { routine = Maybe.withDefault "" model.selectedRoutine
     , sessionQueue = model.sessionQueue
-    , sessionIdx   = model.sessionIdx
-    , setsCache    = Dict.map (\_ c -> { sets = c.sets, config = c.config }) cache
-    , savedAt      = ""
+    , sessionIdx = model.sessionIdx
+    , setsCache = Dict.map (\_ c -> { sets = c.sets, config = c.config }) cache
+    , savedAt = ""
     }
 
 
@@ -321,6 +340,7 @@ updateSetAt i f sets =
         (\j s ->
             if j == i then
                 f s
+
             else
                 s
         )
@@ -334,7 +354,9 @@ removeAt i list =
         |> List.map Tuple.second
 
 
+
 -- ── View ──────────────────────────────────────────────────────────────────────
+
 
 viewLog : LogModel -> Db -> Routines -> Html LogPageMsg
 viewLog model db routines =
@@ -349,7 +371,9 @@ viewLog model db routines =
             viewFinishConfirm model routines
 
 
+
 -- ── Pick routine ──────────────────────────────────────────────────────────────
+
 
 viewPickRoutine : LogModel -> Db -> Routines -> Html LogPageMsg
 viewPickRoutine model db routines =
@@ -388,8 +412,11 @@ viewRoutineCard model db ( key, r ) =
 
         badgeText =
             case lastDate of
-                Just d  -> "last " ++ String.slice 5 10 d |> String.replace "-" "/"
-                Nothing -> "new"
+                Just d ->
+                    "last " ++ String.slice 5 10 d |> String.replace "-" "/"
+
+                Nothing ->
+                    "new"
 
         isSelected =
             model.selectedRoutine == Just key
@@ -416,7 +443,9 @@ viewRoutineCard model db ( key, r ) =
         ]
 
 
+
 -- ── Draft banner ──────────────────────────────────────────────────────────────
+
 
 viewDraftBanner : LogModel -> Html LogPageMsg
 viewDraftBanner model =
@@ -448,7 +477,9 @@ viewDraftBanner model =
                 ]
 
 
+
 -- ── Last session card ─────────────────────────────────────────────────────────
+
 
 viewLastSessionCard : Db -> Routines -> Html LogPageMsg
 viewLastSessionCard db routines =
@@ -522,17 +553,28 @@ viewSetChip s =
 
         chipClass =
             case s.outcome of
-                Warmup       -> "text-gray-600 border-gray-800 bg-gray-900"
-                TooLight     -> "text-red-400 border-red-900 bg-red-950"
-                AlmostFailed -> "text-amber-400 border-amber-900 bg-amber-950"
-                Partial      -> "text-blue-400 border-blue-900 bg-blue-950"
-                Clean        -> "text-gray-400 border-gray-800 bg-gray-900"
+                Warmup ->
+                    "text-gray-600 border-gray-800 bg-gray-900"
+
+                TooLight ->
+                    "text-red-400 border-red-900 bg-red-950"
+
+                AlmostFailed ->
+                    "text-amber-400 border-amber-900 bg-amber-950"
+
+                Partial ->
+                    "text-blue-400 border-blue-900 bg-blue-950"
+
+                Clean ->
+                    "text-gray-400 border-gray-800 bg-gray-900"
     in
     span [ class ("font-mono text-xs rounded px-1.5 py-0.5 border " ++ chipClass) ]
         [ text label ]
 
 
+
 -- ── Logging sets ─────────────────────────────────────────────────────────────
+
 
 viewLoggingSets : LogModel -> Db -> Routines -> Html LogPageMsg
 viewLoggingSets model db routines =
@@ -651,15 +693,15 @@ viewLoggingSets model db routines =
             (List.indexedMap
                 (\i s ->
                     viewSetInput
-                        { index     = i
-                        , set       = s
-                        , isLast    = i == List.length model.currentSets - 1
-                        , isSingle  = List.length model.currentSets == 1
-                        , onWeight  = UpdateWeight
-                        , onReps    = UpdateReps
+                        { index = i
+                        , set = s
+                        , isLast = i == List.length model.currentSets - 1
+                        , isSingle = List.length model.currentSets == 1
+                        , onWeight = UpdateWeight
+                        , onReps = UpdateReps
                         , onOutcome = UpdateOutcome
-                        , onRemove  = RemoveSet
-                        , onAdd     = AddSet
+                        , onRemove = RemoveSet
+                        , onAdd = AddSet
                         }
                 )
                 model.currentSets
@@ -692,6 +734,7 @@ viewLoggingSets model db routines =
                 [ text
                     (if isLast then
                         "Save & finish ✓"
+
                      else
                         "Save & next ("
                             ++ Maybe.withDefault "" nextAbbr
@@ -702,7 +745,9 @@ viewLoggingSets model db routines =
         ]
 
 
+
 -- ── Finish confirm ────────────────────────────────────────────────────────────
+
 
 viewFinishConfirm : LogModel -> Routines -> Html LogPageMsg
 viewFinishConfirm model routines =
@@ -732,11 +777,13 @@ viewFinishConfirm model routines =
             , if not (List.isEmpty logged) then
                 div [ class "font-mono text-xs text-lime-400 mb-2" ]
                     [ text (String.join " · " logged ++ " logged") ]
+
               else
                 text ""
             , if not (List.isEmpty skipped) then
                 div [ class "font-mono text-xs text-gray-600 mb-4" ]
                     [ text (String.join " · " skipped ++ " skipped") ]
+
               else
                 div [ class "mb-4" ] []
             , div [ class "flex gap-2" ]
@@ -755,7 +802,9 @@ viewFinishConfirm model routines =
         ]
 
 
+
 -- ── Shared helpers ────────────────────────────────────────────────────────────
+
 
 getCompleteDates : Routine -> Db -> List String
 getCompleteDates r db =

@@ -6,7 +6,9 @@ import Html.Events exposing (..)
 import Model exposing (..)
 
 
+
 -- ── Read-only set row (last session reference) ────────────────────────────────
+
 
 viewSetReadOnly : Set -> Html msg
 viewSetReadOnly s =
@@ -25,18 +27,20 @@ viewSetReadOnly s =
         ]
 
 
+
 -- ── Editable set row ──────────────────────────────────────────────────────────
 
+
 type alias SetRowConfig msg =
-    { index       : Int
-    , set         : Set
-    , isLast      : Bool
-    , isSingle    : Bool
-    , onWeight    : Int -> String -> msg
-    , onReps      : Int -> String -> msg
-    , onOutcome   : Int -> String -> msg
-    , onRemove    : Int -> msg
-    , onAdd       : msg
+    { index : Int
+    , set : Set
+    , isLast : Bool
+    , isSingle : Bool
+    , onWeight : Int -> String -> msg
+    , onReps : Int -> String -> msg
+    , onOutcome : Int -> String -> msg
+    , onRemove : Int -> msg
+    , onAdd : msg
     }
 
 
@@ -88,6 +92,7 @@ viewSetInput cfg =
         -- Delete button (not on last row)
         , if cfg.isLast || cfg.isSingle then
             text ""
+
           else
             button
                 [ class "text-gray-600 hover:text-red-400 text-lg leading-none px-1 shrink-0"
@@ -102,24 +107,29 @@ viewSetInput cfg =
                 , onClick cfg.onAdd
                 ]
                 [ text "+" ]
+
           else
             text ""
         ]
 
 
+
 -- ── Outcome options ───────────────────────────────────────────────────────────
+
 
 outcomeOptions : List ( String, String )
 outcomeOptions =
-    [ ( "",   "Clean — all reps done" )
-    , ( "-",  "- Almost — failed next rep" )
-    , ( "+",  "+ Warmup set" )
-    , ( "/",  "/ Partial — last rep assisted" )
+    [ ( "", "Clean — all reps done" )
+    , ( "-", "- Almost — failed next rep" )
+    , ( "+", "+ Warmup set" )
+    , ( "/", "/ Partial — last rep assisted" )
     , ( "++", "++ Too light — skip next time" )
     ]
 
 
+
 -- ── Outcome badge ─────────────────────────────────────────────────────────────
+
 
 viewOutcomeBadge : Outcome -> Html msg
 viewOutcomeBadge outcome =
@@ -145,17 +155,25 @@ viewOutcomeBadge outcome =
                 [ text "✓" ]
 
 
+
 -- ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 formatWeight : Maybe Float -> String
 formatWeight w =
     case w of
-        Just v  -> String.fromFloat v ++ " lb"
-        Nothing -> "——"
+        Just v ->
+            String.fromFloat v ++ " lb"
+
+        Nothing ->
+            "——"
 
 
 formatReps : Maybe Int -> String
 formatReps r =
     case r of
-        Just v  -> String.fromInt v ++ " reps"
-        Nothing -> "——"
+        Just v ->
+            String.fromInt v ++ " reps"
+
+        Nothing ->
+            "——"

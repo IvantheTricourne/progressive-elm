@@ -19,22 +19,38 @@ type Badge
 badgeLabel : Badge -> String
 badgeLabel b =
     case b of
-        PB        -> "PB"
-        Clean     -> "Clean"
-        VolumeUp  -> "Vol ↑"
-        Stall     -> "Stall"
+        PB ->
+            "PB"
+
+        Clean ->
+            "Clean"
+
+        VolumeUp ->
+            "Vol ↑"
+
+        Stall ->
+            "Stall"
 
 
 badgeClass : Badge -> String
 badgeClass b =
     case b of
-        PB       -> "badge-pb"
-        Clean    -> "badge-clean"
-        VolumeUp -> "badge-volume"
-        Stall    -> "badge-stall"
+        PB ->
+            "badge-pb"
+
+        Clean ->
+            "badge-clean"
+
+        VolumeUp ->
+            "badge-volume"
+
+        Stall ->
+            "badge-stall"
+
 
 
 -- ── Badge computation ─────────────────────────────────────────────────────────
+
 
 workingSets : List Set -> List Set
 workingSets sets =
@@ -88,6 +104,7 @@ computeBadges sess allSessions =
         pbBadge =
             if currentMax > 0 && currentMax > historicMax then
                 [ PB ]
+
             else
                 []
 
@@ -98,12 +115,14 @@ computeBadges sess allSessions =
         cleanBadge =
             if not hasFailOrPartial && not (List.isEmpty (workingSets sess.sets)) then
                 [ Clean ]
+
             else
                 []
 
         prevSess =
             if sessIdx > 0 then
                 List.head (List.drop (sessIdx - 1) allSessions)
+
             else
                 Nothing
 
@@ -112,6 +131,7 @@ computeBadges sess allSessions =
                 Just prev ->
                     if totalVolume sess.sets > totalVolume prev.sets then
                         [ VolumeUp ]
+
                     else
                         []
 
@@ -131,11 +151,13 @@ computeBadges sess allSessions =
                     w :: rest ->
                         if w > 0 && List.all (\x -> x == w) rest then
                             [ Stall ]
+
                         else
                             []
 
                     _ ->
                         []
+
             else
                 []
     in

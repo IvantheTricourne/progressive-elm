@@ -23,7 +23,9 @@ import Json.Decode as D
 import Json.Encode as E
 
 
+
 -- ── Core types ────────────────────────────────────────────────────────────────
+
 
 type Outcome
     = Clean
@@ -36,88 +38,115 @@ type Outcome
 outcomeToString : Outcome -> String
 outcomeToString o =
     case o of
-        Clean       -> ""
-        Warmup      -> "+"
-        TooLight    -> "++"
-        AlmostFailed -> "-"
-        Partial     -> "/"
+        Clean ->
+            ""
+
+        Warmup ->
+            "+"
+
+        TooLight ->
+            "++"
+
+        AlmostFailed ->
+            "-"
+
+        Partial ->
+            "/"
 
 
 outcomeFromString : String -> Outcome
 outcomeFromString s =
     case s of
-        "+"  -> Warmup
-        "++" -> TooLight
-        "-"  -> AlmostFailed
-        "/"  -> Partial
-        _    -> Clean
+        "+" ->
+            Warmup
+
+        "++" ->
+            TooLight
+
+        "-" ->
+            AlmostFailed
+
+        "/" ->
+            Partial
+
+        _ ->
+            Clean
 
 
 type alias Set =
-    { weight  : Maybe Float
-    , reps    : Maybe Int
+    { weight : Maybe Float
+    , reps : Maybe Int
     , outcome : Outcome
-    , note    : Maybe String
+    , note : Maybe String
     }
 
 
 type alias Session =
-    { date : String   -- YYYY-MM-DD
+    { date : String -- YYYY-MM-DD
     , sets : List Set
     }
 
 
 type alias Exercise =
-    { abbr          : String
-    , fullName      : String
-    , sessions      : List Session
+    { abbr : String
+    , fullName : String
+    , sessions : List Session
     , defaultConfig : Maybe String
     }
 
 
 type alias Db =
-    Dict String Exercise  -- keyed by abbr
+    Dict String Exercise
+
+
+
+-- keyed by abbr
 
 
 type alias Routine =
-    { name      : String
-    , exercises : List String  -- abbr list
-    , archived  : Bool
+    { name : String
+    , exercises : List String -- abbr list
+    , archived : Bool
     }
 
 
 type alias Routines =
-    Dict String Routine  -- keyed by routine key
+    Dict String Routine
 
 
+
+-- keyed by routine key
 -- ── Draft ─────────────────────────────────────────────────────────────────────
 
+
 type alias CachedExercise =
-    { sets   : List Set
+    { sets : List Set
     , config : String
     }
 
 
 type alias Draft =
-    { routine      : String
+    { routine : String
     , sessionQueue : List String
-    , sessionIdx   : Int
-    , setsCache    : Dict String CachedExercise
-    , savedAt      : String
+    , sessionIdx : Int
+    , setsCache : Dict String CachedExercise
+    , savedAt : String
     }
 
 
 emptyDraft : Draft
 emptyDraft =
-    { routine      = ""
+    { routine = ""
     , sessionQueue = []
-    , sessionIdx   = 0
-    , setsCache    = Dict.empty
-    , savedAt      = ""
+    , sessionIdx = 0
+    , setsCache = Dict.empty
+    , savedAt = ""
     }
 
 
+
 -- ── Navigation ────────────────────────────────────────────────────────────────
+
 
 type Tab
     = LogTab
@@ -125,7 +154,9 @@ type Tab
     | ManageTab
 
 
+
 -- ── Top-level Msg ─────────────────────────────────────────────────────────────
+
 
 type Msg
     = -- Storage responses
