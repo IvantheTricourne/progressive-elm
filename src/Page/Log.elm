@@ -1,8 +1,12 @@
 module Page.Log exposing
-    ( LogEffect(..)
+    ( CachedExercise
+    , LogEffect(..)
     , LogModel
     , LogStep(..)
+    , buildDraft
+    , cacheCurrentState
     , initLog
+    , restoreSets
     , updateLog
     , viewLog
     )

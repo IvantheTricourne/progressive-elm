@@ -240,6 +240,9 @@ handleLogEffect effect newLog model =
                 today =
                     model.today
 
+                clearedLog =
+                    { newLog | draft = Nothing }
+
                 ( newDb, cmds ) =
                     Dict.foldl
                         (\abbr cached ( dbAcc, cmdAcc ) ->
@@ -287,7 +290,7 @@ handleLogEffect effect newLog model =
                         ( model.db, [] )
                         setsCache
             in
-            ( { model | log = newLog, db = newDb }
+            ( { model | log = clearedLog, db = newDb }
             , Cmd.batch
                 (cmds
                     ++ [ Storage.deleteDraft { key = "progressive_draft_v1" } ]
