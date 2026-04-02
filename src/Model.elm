@@ -161,6 +161,8 @@ type Tab
 type Msg
     = -- Storage responses
       StorageLoaded D.Value
+    | StorageDraftSaved
+    | StorageRoutinesSaved
       -- Tab
     | SwitchTab Tab
       -- Delegated page messages (opaque, handled per-page)

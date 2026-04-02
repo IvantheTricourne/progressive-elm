@@ -201,6 +201,12 @@ update msg model =
             , cmd
             )
 
+        StorageDraftSaved ->
+            ( model, Cmd.none )
+
+        StorageRoutinesSaved ->
+            ( model, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -209,7 +215,7 @@ handleLogEffect : Log.LogEffect -> Log.LogModel -> Model -> ( Model, Cmd Msg )
 handleLogEffect effect newLog model =
     case effect of
         Log.SaveDraftEffect draft ->
-            ( { model | log = newLog }
+            ( { model | log = { newLog | draft = Just draft } }
             , Storage.saveDraft
                 { key = "progressive_draft_v1"
                 , value = E.encode 0 (Encode.encodeDraft draft)
@@ -217,7 +223,7 @@ handleLogEffect effect newLog model =
             )
 
         Log.FlushDraftEffect draft ->
-            ( { model | log = newLog }
+            ( { model | log = { newLog | draft = Just draft } }
             , Storage.saveDraft
                 { key = "progressive_draft_v1"
                 , value = E.encode 0 (Encode.encodeDraft draft)
@@ -295,7 +301,11 @@ handleLogEffect effect newLog model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Storage.storageLoaded StorageLoaded
+    Sub.batch
+        [ Storage.storageLoaded StorageLoaded
+        , Storage.storageDraftSaved (\_ -> StorageDraftSaved)
+        , Storage.storageRoutinesSaved (\_ -> StorageRoutinesSaved)
+        ]
 
 
 
