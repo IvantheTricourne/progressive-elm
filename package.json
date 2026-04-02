@@ -13,5 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "elm": "^0.19.1-6"
+  },
+  "devDependencies": {
+    "elm-format": "^0.8.8",
+    "prettier": "^3.8.1"
   }
 }
