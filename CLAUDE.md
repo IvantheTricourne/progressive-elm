@@ -20,7 +20,7 @@ npx elm-format --validate src/
 npx prettier --check index.html
 ```
 
-There are no tests. CI runs format checks + build on push/PR to main.
+Tests live in `tests/` and run with `npm test` (`elm-test`). CI runs lint, test, and build as parallel jobs on push/PR to main.
 
 ## Architecture
 
@@ -46,6 +46,10 @@ Main.elm  ←──── Storage ports (storageLoaded)
 **Storage:** All persistence goes through Elm ports defined in `Storage.elm`. The JS shim in `index.html` bridges to `window.storage` (Claude Artifact) with a `localStorage` fallback. Data is stored per-exercise (`progressive_ex_{ABBR}`), plus one key for routines and one for the in-progress session draft.
 
 **Msg types** (`LogPageMsg`, `HistoryPageMsg`, `ManagePageMsg`) are defined in `Model.elm` and wrapped by `Main`'s `Msg` variants (`LogMsg`, `HistoryMsg`, `ManageMsg`). Pages import `Model exposing (..)` to use them directly.
+
+## Git workflow
+
+Always commit on a feature branch named after the current task (e.g. `feat/add-log-tests`, `fix/draft-clear`). Never commit directly to `main`.
 
 ## Key conventions
 
