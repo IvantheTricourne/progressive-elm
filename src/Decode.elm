@@ -4,7 +4,6 @@ module Decode exposing
     , decodeRoutines
     )
 
-import Dict exposing (Dict)
 import Json.Decode as D exposing (Decoder)
 import Model exposing (..)
 

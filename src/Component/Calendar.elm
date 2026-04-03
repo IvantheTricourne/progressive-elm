@@ -9,8 +9,6 @@ import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Model exposing (..)
-import Set as S
 
 
 type alias CalendarState =

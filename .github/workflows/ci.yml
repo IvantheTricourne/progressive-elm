@@ -27,6 +27,9 @@ jobs:
       - name: Check HTML/JS formatting (Prettier)
         run: npx prettier --check index.html
 
+      - name: Lint (elm-review)
+        run: npx elm-review
+
   test:
     runs-on: ubuntu-latest
     steps:
