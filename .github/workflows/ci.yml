@@ -18,6 +18,14 @@ jobs:
           node-version: lts/*
           cache: npm
 
+      - name: Cache Elm packages and review compilation
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elm
+            elm-stuff/generated-code/jfmengels/elm-review
+          key: elm-review-${{ hashFiles('**/elm.json') }}
+
       - name: Install dependencies
         run: npm ci
 
@@ -26,6 +34,9 @@ jobs:
 
       - name: Check HTML/JS formatting (Prettier)
         run: npx prettier --check index.html
+
+      - name: Lint (elm-review)
+        run: npx elm-review
 
   test:
     runs-on: ubuntu-latest

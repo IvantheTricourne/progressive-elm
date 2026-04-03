@@ -5,7 +5,6 @@ module Encode exposing
     , encodeRoutines
     )
 
-import Dict exposing (Dict)
 import Json.Encode as E
 import Model exposing (..)
 

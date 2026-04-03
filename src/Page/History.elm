@@ -167,12 +167,12 @@ viewByExercise model db exKeys =
 
             Just e ->
                 div []
-                    [ viewSessionHistory model.selectedEx e ]
+                    [ viewSessionHistory e ]
         ]
 
 
-viewSessionHistory : String -> Exercise -> Html HistoryPageMsg
-viewSessionHistory abbr ex =
+viewSessionHistory : Exercise -> Html HistoryPageMsg
+viewSessionHistory ex =
     let
         reversed =
             List.reverse ex.sessions

@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Decode exposing (decodeDb, decodeDraft, decodeRoutines)
-import Dict exposing (Dict)
+import Dict
 import Encode exposing (encodeExercise, encodeRoutines)
 import Html exposing (..)
 import Html.Attributes exposing (..)

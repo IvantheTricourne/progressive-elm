@@ -8,7 +8,7 @@ module Page.Manage exposing
     , viewManage
     )
 
-import Dict exposing (Dict)
+import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -244,7 +244,7 @@ viewManage model db routines =
                 [ p [ class "text-xs font-mono text-gray-600 uppercase tracking-wider mb-3" ]
                     [ text "Routines" ]
                 , div [ class "flex flex-col gap-2 mb-3" ]
-                    (Dict.toList routines |> List.map (viewRoutineRow model))
+                    (Dict.toList routines |> List.map viewRoutineRow)
                 , button
                     [ class "w-full py-3 bg-lime-400 text-black rounded-lg text-sm font-semibold mb-6"
                     , onClick ShowNewRoutine
@@ -292,8 +292,8 @@ viewManage model db routines =
         )
 
 
-viewRoutineRow : ManageModel -> ( String, Routine ) -> Html ManagePageMsg
-viewRoutineRow _ ( key, r ) =
+viewRoutineRow : ( String, Routine ) -> Html ManagePageMsg
+viewRoutineRow ( key, r ) =
     div [ class "bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 flex items-center gap-3" ]
         [ div [ class "flex-1 min-w-0" ]
             [ div [ class "text-sm text-white" ] [ text r.name ]
