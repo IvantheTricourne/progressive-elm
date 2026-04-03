@@ -3,7 +3,6 @@ module Page.Log exposing
     , LogEffect(..)
     , LogModel
     , LogStep(..)
-    , buildDraft
     , cacheCurrentState
     , initLog
     , restoreSets

@@ -13,7 +13,6 @@ module Model exposing
     , Session
     , Set
     , Tab(..)
-    , emptyDraft
     , outcomeFromString
     , outcomeToString
     )
@@ -131,17 +130,6 @@ type alias Draft =
     , setsCache : Dict String CachedExercise
     , savedAt : String
     }
-
-
-emptyDraft : Draft
-emptyDraft =
-    { routine = ""
-    , sessionQueue = []
-    , sessionIdx = 0
-    , setsCache = Dict.empty
-    , savedAt = ""
-    }
-
 
 
 -- ── Navigation ────────────────────────────────────────────────────────────────
