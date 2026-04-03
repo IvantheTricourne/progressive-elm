@@ -62,6 +62,10 @@ Main.elm  ←──── Storage ports (storageLoaded)
 
 **Msg types** (`LogPageMsg`, `HistoryPageMsg`, `ManagePageMsg`) are defined in `Model.elm` and wrapped by `Main`'s `Msg` variants (`LogMsg`, `HistoryMsg`, `ManageMsg`). Pages import `Model exposing (..)` to use them directly.
 
+## Git workflow
+
+Always commit on a feature branch named after the current task (e.g. `feat/add-log-tests`, `fix/draft-clear`). Never commit directly to `main`.
+
 ## Key conventions
 
 - `elm-stuff/` is Elm's build cache — treat it like `node_modules/`, never read or modify it.
