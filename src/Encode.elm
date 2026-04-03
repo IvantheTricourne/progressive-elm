@@ -1,6 +1,5 @@
 module Encode exposing
-    ( encodeDb
-    , encodeDraft
+    ( encodeDraft
     , encodeExercise
     , encodeRoutines
     )
@@ -61,15 +60,6 @@ encodeExercise ex =
                         [ ( "defaultConfig", E.null ) ]
                )
         )
-
-
-
--- ── Db ────────────────────────────────────────────────────────────────────────
-
-
-encodeDb : Db -> E.Value
-encodeDb db =
-    E.dict identity encodeExercise db
 
 
 

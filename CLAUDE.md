@@ -18,9 +18,24 @@ npx prettier --write index.html
 # Format (CI check — fails if anything is unformatted)
 npx elm-format --validate src/
 npx prettier --check index.html
+
+# Lint
+npx elm-review
 ```
 
 Tests live in `tests/` and run with `npm test` (`elm-test`). CI runs lint, test, and build as parallel jobs on push/PR to main.
+
+## Pre-commit checklist
+
+Before every commit or push, run all three checks:
+
+```bash
+npx elm-format --validate src/
+npx prettier --check index.html
+npx elm-review
+```
+
+Fix any failures and include the fix in the commit before pushing.
 
 ## Architecture
 

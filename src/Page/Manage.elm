@@ -1,7 +1,7 @@
 module Page.Manage exposing
     ( ManageEffect(..)
     , ManageModel
-    , ManageSubView(..)
+    , ManageSubView
     , ManageUpdate
     , initManage
     , updateManage

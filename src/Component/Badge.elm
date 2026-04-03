@@ -1,5 +1,5 @@
 module Component.Badge exposing
-    ( Badge(..)
+    ( Badge
     , badgeClass
     , badgeLabel
     , computeBadges

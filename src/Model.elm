@@ -13,7 +13,6 @@ module Model exposing
     , Session
     , Set
     , Tab(..)
-    , emptyDraft
     , outcomeFromString
     , outcomeToString
     )
@@ -130,16 +129,6 @@ type alias Draft =
     , sessionIdx : Int
     , setsCache : Dict String CachedExercise
     , savedAt : String
-    }
-
-
-emptyDraft : Draft
-emptyDraft =
-    { routine = ""
-    , sessionQueue = []
-    , sessionIdx = 0
-    , setsCache = Dict.empty
-    , savedAt = ""
     }
 
 
