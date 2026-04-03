@@ -18,6 +18,12 @@ jobs:
           node-version: lts/*
           cache: npm
 
+      - name: Cache Elm home
+        uses: actions/cache@v4
+        with:
+          path: ~/.elm
+          key: elm-${{ hashFiles('**/elm.json') }}
+
       - name: Install dependencies
         run: npm ci
 
