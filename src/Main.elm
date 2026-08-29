@@ -315,21 +315,17 @@ subscriptions _ =
 -- ── View ──────────────────────────────────────────────────────────────────────
 
 
-view : Model -> Browser.Document Msg
+view : Model -> Html Msg
 view model =
-    { title = "progressive/"
-    , body =
-        [ div [ class "bg-gray-950 text-white min-h-dvh max-w-[480px] mx-auto pb-20 font-sans antialiased" ]
-            [ viewNav
-            , if not model.loaded then
-                viewLoading
+    div [ class "bg-gray-950 text-white min-h-dvh max-w-[480px] mx-auto pb-20 font-sans antialiased" ]
+        [ viewNav
+        , if not model.loaded then
+            viewLoading
 
-              else
-                viewScreen model
-            , viewBottomNav model.tab
-            ]
+          else
+            viewScreen model
+        , viewBottomNav model.tab
         ]
-    }
 
 
 viewNav : Html Msg
@@ -392,7 +388,7 @@ navBtn icon label tab current =
 
 main : Program E.Value Model Msg
 main =
-    Browser.document
+    Browser.element
         { init = init
         , update = update
         , subscriptions = subscriptions

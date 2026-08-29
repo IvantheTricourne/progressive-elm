@@ -1,6 +1,6 @@
 # progressive/
 
-Workout tracker — Elm frontend, `window.storage` persistence (Claude Artifact phase).
+Workout tracker — Elm frontend, Supabase or `localStorage` persistence.
 
 ## Setup
 
@@ -22,12 +22,17 @@ elm make src/Main.elm --output=/dev/null
 elm make src/Main.elm --output=dist/index.js --optimize
 ```
 
-## Running in Claude Artifact
+## Running it
 
-1. Build: `npm run build`
-2. The output `dist/index.js` + `index.html` need to be served together.
-3. In the Claude Artifact context, `window.storage` is available and data persists across sessions.
-4. Outside Claude, falls back to `localStorage` automatically.
+```bash
+npm run build
+npx http-server -p 8080 .    # index.html + dist/index.js must be served together
+```
+
+Storage is chosen at boot: an account via Supabase when signed in, otherwise
+`localStorage` for that browser. With `supabase-config.js` left at its
+placeholder values the app runs standalone on `localStorage` and hides the sync
+control. See `MIGRATION_PLAN.md`.
 
 ## File structure
 
@@ -48,21 +53,25 @@ src/
     Calendar.elm        Calendar grid + stats
 dist/
   index.js              Build output
-index.html              Shell with Tailwind CDN + port JS shim
+index.html              Shell with Tailwind CDN + storage shim + sync UI
+supabase-config.js      Project URL + anon key (both public; placeholders by default)
+supabase/               Local stack config and SQL migrations
 elm.json                Elm project config
 package.json            npm build script
 ```
 
 ## Storage keys
 
-| Key | Contents |
-|-----|----------|
-| `progressive_ex_{ABBR}` | Exercise data (one key per exercise) |
-| `progressive_routines_v1` | All routines |
-| `progressive_draft_v1` | In-progress session draft |
+| Key                       | Contents                             |
+| ------------------------- | ------------------------------------ |
+| `progressive_ex_{ABBR}`   | Exercise data (one key per exercise) |
+| `progressive_routines_v1` | All routines                         |
+| `progressive_draft_v1`    | In-progress session draft            |
 
-## Migration to Supabase (Phase 2)
+Keys are discovered by prefix rather than hardcoded, so an exercise added in
+Manage is found again on reload.
 
-Replace the port handlers in `index.html` with `fetch()` calls to the Supabase REST API.
-The Elm code is unchanged — only the JS shim changes.
-See `MIGRATION_PLAN.md` for the SQL schema and import script.
+## Supabase
+
+Schema and setup steps live in `MIGRATION_PLAN.md`; the migration is in
+`supabase/migrations/`. `npx supabase start` runs the whole stack locally.
