@@ -33,7 +33,7 @@ jobs:
         run: npx elm-format --validate src/
 
       - name: Check HTML/JS formatting (Prettier)
-        run: npx prettier --check index.html
+        run: npx prettier --check index.html supabase-config.js
 
       - name: Lint (elm-review)
         run: npx elm-review
