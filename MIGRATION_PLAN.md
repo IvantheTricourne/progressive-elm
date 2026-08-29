@@ -1,166 +1,94 @@
-# Workout Tracker — Persistence Migration Plan
+# Persistence — where data lives
 
-## Current state (Phase 1)
+## Current design
 
-The app is a Claude Artifact using `window.storage` — Claude's built-in key-value store tied to your account. Works across any device where you're logged into Claude. No external accounts or API keys required.
+Storage is chosen at boot by the shim in `index.html`, from two backends behind
+one interface (`entries(prefix)` / `set(key, value)` / `del(key)`):
 
-**Tradeoff:** Data lives inside Claude's infrastructure. Use the Export tab regularly as a backup.
+| Backend    | When                                                | Scope             |
+| ---------- | --------------------------------------------------- | ----------------- |
+| `supabase` | signed in, and `supabase-config.js` has real values | the account       |
+| `local`    | signed out, unconfigured, or Supabase unreachable   | that browser only |
 
----
+Signing in gates **sync, not the app**. A visitor arriving from a link gets a
+working tracker on `localStorage`; signing in moves the same data to an account
+that follows you across devices.
 
-## Phase 2 — Supabase migration
+The Elm side is unaware of all this — it still speaks the five ports in
+`Storage.elm`, keyed by `progressive_ex_{ABBR}`, `progressive_routines_v1`,
+and `progressive_draft_v1`.
 
-### Why migrate?
-- Full data ownership, independent of Claude
-- Works in any browser, any context (not just Claude app)
-- Better for querying large history (years of sessions)
-- Free tier is generous (~500MB database, unlimited API calls)
+## Schema
 
-### Step 1 — Create Supabase project (5 min)
+One table, `public.kv`, mirroring those keys — see
+`supabase/migrations/20260829000000_kv_store.sql`.
 
-1. Go to https://supabase.com and create a free account
-2. Create a new project (pick any region close to you)
-3. Go to **Settings → API** and copy:
-   - `Project URL` (looks like `https://xxxx.supabase.co`)
-   - `anon public` key (long JWT string)
-4. Go to **SQL Editor** and run this schema:
-
-```sql
-create table sessions (
-  id uuid primary key default gen_random_uuid(),
-  exercise text not null,
-  date date not null,
-  sets jsonb not null,
-  config text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  unique(exercise, date)
-);
-
--- Enable Row Level Security (optional but recommended)
-alter table sessions enable row level security;
-
--- Allow all reads/writes with anon key for now
-create policy "allow all" on sessions for all using (true);
-```
-
-### Step 2 — Export and import existing data
-
-1. In the app, go to **Export tab** and copy the CSV
-2. In Supabase dashboard, go to **Table Editor → sessions → Import**
-3. Paste the CSV — map columns: `exercise`, `date`, `weight`, `reps`, `outcome`, `note`
-4. Note: the CSV is flat (one row per set); the Supabase schema stores sets as JSONB (one row per session). Use the import script below.
-
-**Import script** (run in Supabase SQL editor after pasting CSV into a temp table):
+Keeping the key/value shape is what confines the backend swap to the shim.
+`value` is `jsonb` rather than `text`, so history is still queryable in SQL:
 
 ```sql
--- Assuming you created a temp_import table with the raw CSV columns
-insert into sessions (exercise, date, sets)
-select
-  exercise,
-  date::date,
-  jsonb_agg(jsonb_build_object(
-    'weight', weight::numeric,
-    'reps', reps::integer,
-    'outcome', outcome,
-    'note', note
-  ) order by ctid)
-from temp_import
-group by exercise, date
-on conflict (exercise, date) do update
-  set sets = excluded.sets, updated_at = now();
+select key, jsonb_array_length(value -> 'sessions') as sessions
+from kv where key like 'progressive_ex_%';
 ```
 
-### Step 3 — Swap the storage module in the app
+Two properties matter:
 
-In the Artifact source, find the `// ─── STORAGE MODULE ───` section and replace the Phase 1 block with:
+- **Primary key `(user_id, key)`** — two accounts holding the same key never
+  collide, so one project is safe for more than one person.
+- **RLS granted `to authenticated` only** — the anon role has no access at all.
+  A signed-out visitor cannot read or write the table even though the anon key
+  is public. That key is _meant_ to ship in client code; the policy is what
+  protects the data, which is why `using (true)` would be a mistake here.
 
-```js
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_KEY = 'YOUR_ANON_KEY';
-const HEADERS = { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' };
+## Setting up a hosted project
 
-function dbToRows(db) {
-  const rows = [];
-  for (const abbr of Object.keys(db)) {
-    for (const sess of db[abbr].sessions) {
-      rows.push({ exercise: abbr, date: sess.date, sets: sess.sets, config: db[abbr].defaultConfig });
-    }
-  }
-  return rows;
-}
+1. Create a project at https://supabase.com.
+2. **Settings → API**: copy the Project URL and the `anon public` key into
+   `supabase-config.js`. Never put the `service_role` key there.
+3. Push the schema — `npx supabase link --project-ref <ref>` then
+   `npx supabase db push`, or paste the migration into the SQL Editor.
+4. **Authentication → URL Configuration**: add the deployed URL to the redirect
+   allow-list. Magic links silently fall back to `site_url` otherwise. The
+   local equivalents are in `supabase/config.toml`.
 
-function rowsToDB(rows, seed) {
-  const db = JSON.parse(JSON.stringify(seed));
-  for (const row of rows) {
-    if (!db[row.exercise]) continue;
-    db[row.exercise].sessions.push({ date: row.date, sets: row.sets });
-    if (row.config) db[row.exercise].defaultConfig = row.config;
-  }
-  // Sort sessions by date
-  for (const abbr of Object.keys(db)) {
-    db[abbr].sessions.sort((a, b) => a.date.localeCompare(b.date));
-  }
-  return db;
-}
+Left as placeholders, `supabase-config.js` keeps the app on `localStorage` and
+hides the sync control, so the repo still runs standalone.
 
-const storage = {
-  async load() {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/sessions?select=*&order=date.asc`, { headers: HEADERS });
-    if (!r.ok) return null;
-    const rows = await r.json();
-    return rows.length ? rowsToDB(rows, SEED) : null;
-  },
-  async save(db) {
-    const rows = dbToRows(db);
-    await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
-      method: 'POST',
-      headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates' },
-      body: JSON.stringify(rows)
-    });
-  },
-  async clear() {
-    await fetch(`${SUPABASE_URL}/rest/v1/sessions?exercise=neq.null`, {
-      method: 'DELETE', headers: HEADERS
-    });
-  }
-};
+## Moving existing data in
+
+Signing in on a device that has local history uploads it automatically, guarded
+on the account being completely empty — so signing in somewhere with stale data
+can never clobber good data. See `seedFromLocalIfEmpty` in `index.html`.
+
+That covers `localStorage`. It does **not** cover data held in the Claude
+Artifact's `window.storage`, which no longer has a code path here. Getting that
+out needs the Export button in Manage, which is currently a stub
+(`CopyExport -> noOp` in `src/Page/Manage.elm`) — it renders and does nothing.
+
+## Local development
+
+```bash
+npx supabase start          # Postgres + PostgREST + Auth on :54321
+npx supabase db reset       # reapply migrations
+npx supabase stop
 ```
 
----
+`npx supabase status` prints the local URL and anon key for `supabase-config.js`.
 
-## Storage module interface (contract)
+## Working on the shim
 
-The rest of the app only ever calls these — never call `window.storage` or `fetch` directly from UI code:
+Two things in `index.html` are load-bearing and easy to reintroduce as bugs:
 
-```js
-await storage.load()   // → db object or null
-await storage.save(db) // → void
-await storage.clear()  // → void
-```
+- **`storageLoaded` must fire exactly once.** `Main.update` rebuilds the Log and
+  History sub-models from it, so a second fire mid-session wipes the screen.
+  The backend is therefore chosen _before_ the first load, and a sign-in
+  reloads the page rather than swapping backends under a live session.
+- **Never await the Supabase client inside `onAuthStateChange`.** supabase-js
+  invokes that callback while holding its auth lock; touching the client from
+  inside deadlocks `getSession()` and hangs the boot on "Loading…". Defer with
+  `setTimeout(..., 0)` first.
 
-This is what makes swapping backends a one-section change.
+## Future options
 
----
-
-## Size estimates
-
-| Timeframe | Approx sessions | Data size |
-|-----------|----------------|-----------|
-| 1 month (current) | ~20 | ~25 KB |
-| 1 year | ~240 | ~300 KB |
-| 5 years | ~1,200 | ~1.5 MB |
-
-Artifact storage limit: 5MB per key — fine for several years.
-Supabase free tier: 500MB — effectively unlimited for this use case.
-
----
-
-## Future options (Phase 3+)
-
-If you ever want to move again:
-- **Google Sheets:** possible with a Cloudflare Worker as an auth proxy
-- **Self-hosted Postgres:** swap Supabase URL for your own PostgREST instance
-- **Local-first (PGlite):** run Postgres in-browser with sync — emerging option as of 2026
-
-The storage interface contract above means any of these is a drop-in replacement.
+The backend interface is the seam — any of these is a drop-in replacement:
+self-hosted PostgREST, Cloudflare Workers + D1, or local-first PGlite with sync.
